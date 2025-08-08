@@ -92,14 +92,16 @@ def download_repo(repo_url: str, local_path: str, type: str = "github", access_t
             parsed = urlparse(repo_url)
             # Determine the repository type and format the URL accordingly
             if type == "github":
-                # Format: https://{token}@github.com/owner/repo.git
+                # Format: https://{token}@{domain}/owner/repo.git
+                # Works for both github.com and enterprise GitHub domains
                 clone_url = urlunparse((parsed.scheme, f"{access_token}@{parsed.netloc}", parsed.path, '', '', ''))
             elif type == "gitlab":
                 # Format: https://oauth2:{token}@gitlab.com/owner/repo.git
                 clone_url = urlunparse((parsed.scheme, f"oauth2:{access_token}@{parsed.netloc}", parsed.path, '', '', ''))
             elif type == "bitbucket":
-                # Format: https://{token}@bitbucket.org/owner/repo.git
-                clone_url = urlunparse((parsed.scheme, f"{access_token}@{parsed.netloc}", parsed.path, '', '', ''))
+                # Format: https://x-token-auth:{token}@bitbucket.org/owner/repo.git
+                clone_url = urlunparse((parsed.scheme, f"x-token-auth:{access_token}@{parsed.netloc}", parsed.path, '', '', ''))
+
             logger.info("Using access token for authentication")
 
         # Clone the repository
@@ -370,7 +372,7 @@ def prepare_data_pipeline(is_ollama_embedder: bool = None):
     splitter = TextSplitter(**configs["text_splitter"])
     embedder_config = get_embedder_config()
 
-    embedder = get_embedder(is_local_ollama=is_ollama_embedder)
+    embedder = get_embedder()
 
     if is_ollama_embedder:
         # Use Ollama document processor for single-document processing
@@ -414,9 +416,11 @@ def transform_documents_and_save_to_db(
 def get_github_file_content(repo_url: str, file_path: str, access_token: str = None) -> str:
     """
     Retrieves the content of a file from a GitHub repository using the GitHub API.
-
+    Supports both public GitHub (github.com) and GitHub Enterprise (custom domains).
+    
     Args:
-        repo_url (str): The URL of the GitHub repository (e.g., "https://github.com/username/repo")
+        repo_url (str): The URL of the GitHub repository 
+                       (e.g., "https://github.com/username/repo" or "https://github.company.com/username/repo")
         file_path (str): The path to the file within the repository (e.g., "src/main.py")
         access_token (str, optional): GitHub personal access token for private repositories
 
@@ -427,20 +431,30 @@ def get_github_file_content(repo_url: str, file_path: str, access_token: str = N
         ValueError: If the file cannot be fetched or if the URL is not a valid GitHub URL
     """
     try:
-        # Extract owner and repo name from GitHub URL
-        if not (repo_url.startswith("https://github.com/") or repo_url.startswith("http://github.com/")):
+        # Parse the repository URL to support both github.com and enterprise GitHub
+        parsed_url = urlparse(repo_url)
+        if not parsed_url.scheme or not parsed_url.netloc:
             raise ValueError("Not a valid GitHub repository URL")
 
-        parts = repo_url.rstrip('/').split('/')
-        if len(parts) < 5:
-            raise ValueError("Invalid GitHub URL format")
+        # Check if it's a GitHub-like URL structure
+        path_parts = parsed_url.path.strip('/').split('/')
+        if len(path_parts) < 2:
+            raise ValueError("Invalid GitHub URL format - expected format: https://domain/owner/repo")
 
-        owner = parts[-2]
-        repo = parts[-1].replace(".git", "")
+        owner = path_parts[-2]
+        repo = path_parts[-1].replace(".git", "")
 
+        # Determine the API base URL
+        if parsed_url.netloc == "github.com":
+            # Public GitHub
+            api_base = "https://api.github.com"
+        else:
+            # GitHub Enterprise - API is typically at https://domain/api/v3/
+            api_base = f"{parsed_url.scheme}://{parsed_url.netloc}/api/v3"
+        
         # Use GitHub API to get file content
         # The API endpoint for getting file content is: /repos/{owner}/{repo}/contents/{path}
-        api_url = f"https://api.github.com/repos/{owner}/{repo}/contents/{file_path}"
+        api_url = f"{api_base}/repos/{owner}/{repo}/contents/{file_path}"
 
         # Fetch file content from GitHub API
         headers = {}
@@ -511,8 +525,25 @@ def get_gitlab_file_content(repo_url: str, file_path: str, access_token: str = N
         # Encode file path
         encoded_file_path = quote(file_path, safe='')
 
-        # Default to 'main' branch if not specified
-        default_branch = 'main'
+        # Try to get the default branch from the project info
+        default_branch = None
+        try:
+            project_info_url = f"{gitlab_domain}/api/v4/projects/{encoded_project_path}"
+            project_headers = {}
+            if access_token:
+                project_headers["PRIVATE-TOKEN"] = access_token
+            
+            project_response = requests.get(project_info_url, headers=project_headers)
+            if project_response.status_code == 200:
+                project_data = project_response.json()
+                default_branch = project_data.get('default_branch', 'main')
+                logger.info(f"Found default branch: {default_branch}")
+            else:
+                logger.warning(f"Could not fetch project info, using 'main' as default branch")
+                default_branch = 'main'
+        except Exception as e:
+            logger.warning(f"Error fetching project info: {e}, using 'main' as default branch")
+            default_branch = 'main'
 
         api_url = f"{gitlab_domain}/api/v4/projects/{encoded_project_path}/repository/files/{encoded_file_path}/raw?ref={default_branch}"
         # Fetch file content from GitLab API
@@ -565,9 +596,29 @@ def get_bitbucket_file_content(repo_url: str, file_path: str, access_token: str 
         owner = parts[-2]
         repo = parts[-1].replace(".git", "")
 
+        # Try to get the default branch from the repository info
+        default_branch = None
+        try:
+            repo_info_url = f"https://api.bitbucket.org/2.0/repositories/{owner}/{repo}"
+            repo_headers = {}
+            if access_token:
+                repo_headers["Authorization"] = f"Bearer {access_token}"
+            
+            repo_response = requests.get(repo_info_url, headers=repo_headers)
+            if repo_response.status_code == 200:
+                repo_data = repo_response.json()
+                default_branch = repo_data.get('mainbranch', {}).get('name', 'main')
+                logger.info(f"Found default branch: {default_branch}")
+            else:
+                logger.warning(f"Could not fetch repository info, using 'main' as default branch")
+                default_branch = 'main'
+        except Exception as e:
+            logger.warning(f"Error fetching repository info: {e}, using 'main' as default branch")
+            default_branch = 'main'
+
         # Use Bitbucket API to get file content
         # The API endpoint for getting file content is: /2.0/repositories/{owner}/{repo}/src/{branch}/{path}
-        api_url = f"https://api.bitbucket.org/2.0/repositories/{owner}/{repo}/src/main/{file_path}"
+        api_url = f"https://api.bitbucket.org/2.0/repositories/{owner}/{repo}/src/{default_branch}/{file_path}"
 
         # Fetch file content from Bitbucket API
         headers = {}
@@ -663,12 +714,27 @@ class DatabaseManager:
         self.repo_url_or_path = None
         self.repo_paths = None
 
-    def _create_repo(self, repo_url_or_path: str, type: str = "github", access_token: str = None) -> None:
+    def _extract_repo_name_from_url(self, repo_url_or_path: str, repo_type: str) -> str:
+        # Extract owner and repo name to create unique identifier
+        url_parts = repo_url_or_path.rstrip('/').split('/')
+
+        if repo_type in ["github", "gitlab", "bitbucket"] and len(url_parts) >= 5:
+            # GitHub URL format: https://github.com/owner/repo
+            # GitLab URL format: https://gitlab.com/owner/repo or https://gitlab.com/group/subgroup/repo
+            # Bitbucket URL format: https://bitbucket.org/owner/repo
+            owner = url_parts[-2]
+            repo = url_parts[-1].replace(".git", "")
+            repo_name = f"{owner}_{repo}"
+        else:
+            repo_name = url_parts[-1].replace(".git", "")
+        return repo_name
+
+    def _create_repo(self, repo_url_or_path: str, repo_type: str = "github", access_token: str = None) -> None:
         """
         Download and prepare all paths.
         Paths:
-        ~/.adalflow/repos/{repo_name} (for url, local path will be the same)
-        ~/.adalflow/databases/{repo_name}.pkl
+        ~/.adalflow/repos/{owner}_{repo_name} (for url, local path will be the same)
+        ~/.adalflow/databases/{owner}_{repo_name}.pkl
 
         Args:
             repo_url_or_path (str): The URL or local path of the repository
@@ -682,27 +748,16 @@ class DatabaseManager:
             os.makedirs(root_path, exist_ok=True)
             # url
             if repo_url_or_path.startswith("https://") or repo_url_or_path.startswith("http://"):
-                # Extract repo name based on the URL format
-                if type == "github":
-                    # GitHub URL format: https://github.com/owner/repo
-                    repo_name = repo_url_or_path.split("/")[-1].replace(".git", "")
-                elif type == "gitlab":
-                    # GitLab URL format: https://gitlab.com/owner/repo or https://gitlab.com/group/subgroup/repo
-                    # Use the last part of the URL as the repo name
-                    repo_name = repo_url_or_path.split("/")[-1].replace(".git", "")
-                elif type == "bitbucket":
-                    # Bitbucket URL format: https://bitbucket.org/owner/repo
-                    repo_name = repo_url_or_path.split("/")[-1].replace(".git", "")
-                else:
-                    # Generic handling for other Git URLs
-                    repo_name = repo_url_or_path.split("/")[-1].replace(".git", "")
+                # Extract the repository name from the URL
+                repo_name = self._extract_repo_name_from_url(repo_url_or_path, repo_type)
+                logger.info(f"Extracted repo name: {repo_name}")
 
                 save_repo_dir = os.path.join(root_path, "repos", repo_name)
 
                 # Check if the repository directory already exists and is not empty
                 if not (os.path.exists(save_repo_dir) and os.listdir(save_repo_dir)):
                     # Only download if the repository doesn't exist or is empty
-                    download_repo(repo_url_or_path, save_repo_dir, type, access_token)
+                    download_repo(repo_url_or_path, save_repo_dir, repo_type, access_token)
                 else:
                     logger.info(f"Repository already exists at {save_repo_dir}. Using existing repository.")
             else:  # local path

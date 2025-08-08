@@ -1,6 +1,24 @@
 {
   "default_provider": "openrouter",
   "providers": {
+    "dashscope": {
+      "default_model": "qwen-plus",
+      "supportsCustomModel": true,
+      "models": {
+        "qwen-plus": {
+          "temperature": 0.7,
+          "top_p": 0.8
+        },
+        "qwen-turbo": {
+          "temperature": 0.7,
+          "top_p": 0.8
+        },
+        "deepseek-r1": {
+          "temperature": 0.7,
+          "top_p": 0.8
+        }
+      }
+    },
     "google": {
       "default_model": "gemini-2.0-flash",
       "supportsCustomModel": true,
@@ -39,8 +57,7 @@
           "top_p": 0.8
         },
         "o3": {
-          "temperature": 0.7,
-          "top_p": 0.8
+          "temperature": 1.0
         },
         "o4-mini": {
           "temperature": 0.7,
@@ -163,6 +180,30 @@
           "top_p": 0.8
         }
       }
+    },
+    "azure": {
+      "client_class": "AzureAIClient",
+      "default_model": "gpt-4o",
+      "supportsCustomModel": true,
+      "models": {
+        "gpt-4o": {
+          "temperature": 0.7,
+          "top_p": 0.8
+        },
+        "gpt-4": {
+          "temperature": 0.7,
+          "top_p": 0.8
+        },
+        "gpt-35-turbo": {
+          "temperature": 0.7,
+          "top_p": 0.8
+        },
+        "gpt-4-turbo": {
+          "temperature": 0.7,
+          "top_p": 0.8
+        }
+      }
     }
   }
 }
+

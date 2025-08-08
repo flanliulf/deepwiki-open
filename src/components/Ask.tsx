@@ -76,6 +76,8 @@ const Ask: React.FC<AskProps> = ({
   const [researchComplete, setResearchComplete] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const responseRef = useRef<HTMLDivElement>(null);
+  const providerRef = useRef(provider);
+  const modelRef = useRef(model);
 
   // Focus input on component mount
   useEffect(() => {
@@ -106,24 +108,34 @@ const Ask: React.FC<AskProps> = ({
   }, []);
 
   useEffect(() => {
-    const fetchDefaultModel = async () => {
+    providerRef.current = provider;
+    modelRef.current = model;
+  }, [provider, model]);
+
+  useEffect(() => {
+    const fetchModel = async () => {
       try {
         setIsLoading(true);
 
         const response = await fetch('/api/models/config');
-
         if (!response.ok) {
           throw new Error(`Error fetching model configurations: ${response.status}`);
         }
 
         const data = await response.json();
 
-        setSelectedProvider(data.defaultProvider);
+        // use latest provider/model ref to check
+        if(providerRef.current == '' || modelRef.current== '') {
+          setSelectedProvider(data.defaultProvider);
 
-        // Find the default provider and set its default model
-        const selectedProvider = data.providers.find((p:Provider) => p.id === data.defaultProvider);
-        if (selectedProvider && selectedProvider.models.length > 0) {
-          setSelectedModel(selectedProvider.models[0].id);
+          // Find the default provider and set its default model
+          const selectedProvider = data.providers.find((p:Provider) => p.id === data.defaultProvider);
+          if (selectedProvider && selectedProvider.models.length > 0) {
+            setSelectedModel(selectedProvider.models[0].id);
+          }
+        } else {
+          setSelectedProvider(providerRef.current);
+          setSelectedModel(modelRef.current);
         }
       } catch (err) {
         console.error('Failed to fetch model configurations:', err);
@@ -131,9 +143,8 @@ const Ask: React.FC<AskProps> = ({
         setIsLoading(false);
       }
     };
-
     if(provider == '' || model == '') {
-      fetchDefaultModel()
+      fetchModel()
     }
   }, [provider, model]);
 
@@ -149,6 +160,17 @@ const Ask: React.FC<AskProps> = ({
       inputRef.current.focus();
     }
   };
+  const downloadresponse = () =>{
+  const blob = new Blob([response], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `response-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.md`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
   // Function to check if research is complete based on response content
   const checkIfResearchComplete = (content: string): boolean => {
@@ -752,6 +774,19 @@ const Ask: React.FC<AskProps> = ({
                 </div>
               )}
 
+            <div className="flex items-center space-x-2">
+              {/* Download button */}
+              <button
+                onClick={downloadresponse}
+                className="text-xs text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 px-2 py-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center gap-1"
+                title="Download response as markdown file"
+              >
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Download
+              </button>
+
               {/* Clear button */}
               <button
                 id="ask-clear-conversation"
@@ -761,6 +796,7 @@ const Ask: React.FC<AskProps> = ({
                 Clear conversation
               </button>
             </div>
+              </div>
           </div>
         )}
 

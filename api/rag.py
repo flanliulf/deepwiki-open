@@ -1,4 +1,5 @@
 import logging
+import weakref
 import re
 from dataclasses import dataclass
 from typing import Any, List, Tuple, Dict
@@ -227,10 +228,22 @@ class RAG(adal.Component):
         # Determine if we're using Ollama embedder based on configuration
         self.is_ollama_embedder = is_ollama_embedder()
 
+        # Check if Ollama model exists before proceeding
+        if self.is_ollama_embedder:
+            from api.ollama_patch import check_ollama_model_exists
+            from api.config import get_embedder_config
+            
+            embedder_config = get_embedder_config()
+            if embedder_config and embedder_config.get("model_kwargs", {}).get("model"):
+                model_name = embedder_config["model_kwargs"]["model"]
+                if not check_ollama_model_exists(model_name):
+                    raise Exception(f"Ollama model '{model_name}' not found. Please run 'ollama pull {model_name}' to install it.")
+
         # Initialize components
         self.memory = Memory()
-        self.embedder = get_embedder(is_local_ollama=self.is_ollama_embedder)
+        self.embedder = get_embedder()
 
+        self_weakref = weakref.ref(self)
         # Patch: ensure query embedding is always single string for Ollama
         def single_string_embedder(query):
             # Accepts either a string or a list, always returns embedding for a single string
@@ -238,7 +251,9 @@ class RAG(adal.Component):
                 if len(query) != 1:
                     raise ValueError("Ollama embedder only supports a single string")
                 query = query[0]
-            return self.embedder(input=query)
+            instance = self_weakref()
+            assert instance is not None, "RAG instance is no longer available, but the query embedder was called."
+            return instance.embedder(input=query)
 
         # Use single string embedder for Ollama, regular embedder for others
         self.query_embedder = single_string_embedder if self.is_ollama_embedder else self.embedder

@@ -14,7 +14,7 @@
 [![Twitter/X](https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://x.com/sashimikun_void)
 [![Discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.com/invite/VQMBGR8u5v)
 
-[English](./README.md) | [简体中文](./README.zh.md) | [日本語](./README.ja.md) | [Español](./README.es.md) | [한국어](./README.kr.md) | [Tiếng Việt](./README.vi.md)
+[English](./README.md) | [简体中文](./README.zh.md) | [繁體中文](./README.zh-tw.md) | [日本語](./README.ja.md) | [Español](./README.es.md) | [한국어](./README.kr.md) | [Tiếng Việt](./README.vi.md) | [Português Brasileiro](./README.pt-br.md) | [Français](./README.fr.md) | [Русский](./README.ru.md)
 
 ## ✨ Características
 
@@ -247,7 +247,7 @@ Si deseas usar modelos de embedding compatibles con la API de OpenAI (como Aliba
 2. En el archivo `.env` de la raíz del proyecto, configura las variables de entorno necesarias, por ejemplo:
    ```
    OPENAI_API_KEY=tu_api_key
-   OPENAI_API_BASE_URL=tu_endpoint_compatible_openai
+   OPENAI_BASE_URL=tu_endpoint_compatible_openai
    ```
 3. El programa sustituirá automáticamente los placeholders de embedder.json por los valores de tus variables de entorno.
 

@@ -58,6 +58,12 @@ If you're using Docker deployment, you'll need to configure container access to 
 OLLAMA_HOST=http://host.docker.internal:11434
 ```
 
+Configure the Local Embedder for Ollama:
+```
+cp api/config/embedder.ollama.json.bak api/config/embedder.json
+# overwrite api/config/embedder.json? (y/n [n]) y
+```
+
 Start the backend:
 ```bash
 pip install -r api/requirements.txt

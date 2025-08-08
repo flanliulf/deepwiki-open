@@ -39,7 +39,7 @@ The first command downloads the embedding model that DeepWiki uses to understand
 
 Clone the DeepWiki repository:
 ```bash
-git clone https://github.com/AsyncFuncAI/deepwiki-open.git
+git clone https://github.com/flanliulf/deepwiki-open.git
 cd deepwiki-open
 ```
 
@@ -49,6 +49,13 @@ Create a `.env` file in the project root:
 PORT=8001
 # Optionally, provide OLLAMA_HOST if Ollama is not local
 OLLAMA_HOST=your_ollama_host # (default: http://localhost:11434)
+```
+
+**Important for Docker Deployment**:
+If you're using Docker deployment, you'll need to configure container access to host Ollama:
+```bash
+# Docker environment configuration to access host Ollama
+OLLAMA_HOST=http://host.docker.internal:11434
 ```
 
 Start the backend:
@@ -72,7 +79,28 @@ npm run dev
 
 ![Ollama Option](screenshots/Ollama.png)
 
-## Alternative using Dockerfile
+## Docker Deployment
+
+### Using docker-compose (Recommended)
+
+1. Ensure your `.env` file contains the correct Ollama configuration:
+   ```bash
+   # Docker container access to host Ollama
+   OLLAMA_HOST=http://host.docker.internal:11434
+   ```
+
+2. Start the service:
+   ```bash
+   docker-compose up -d
+   ```
+
+3. Verify connection:
+   ```bash
+   # Test if Docker container can connect to host Ollama
+   docker exec -it deepwiki-open-deepwiki-1 curl http://host.docker.internal:11434/api/tags
+   ```
+
+### Alternative using Dockerfile
 
 1. Build the docker image `docker build -f Dockerfile-ollama-local -t deepwiki:ollama-local .`
 2. Run the container:
@@ -80,13 +108,13 @@ npm run dev
    # For regular use
    docker run -p 3000:3000 -p 8001:8001 --name deepwiki \
      -v ~/.adalflow:/root/.adalflow \
-     -e OLLAMA_HOST=your_ollama_host \
+     -e OLLAMA_HOST=http://host.docker.internal:11434 \
      deepwiki:ollama-local
    
    # For local repository analysis
    docker run -p 3000:3000 -p 8001:8001 --name deepwiki \
      -v ~/.adalflow:/root/.adalflow \
-     -e OLLAMA_HOST=your_ollama_host \
+     -e OLLAMA_HOST=http://host.docker.internal:11434 \
      -v /path/to/your/repo:/app/local-repos/repo-name \
      deepwiki:ollama-local
    ```
@@ -112,6 +140,35 @@ When you select "Use Local Ollama", DeepWiki will:
 - Verify that Ollama is running on the default port (11434)
 - Try restarting Ollama
 
+### Docker Connection Issues
+If you cannot connect to Ollama from Docker containers:
+
+1. **Verify host Ollama is running**:
+   ```bash
+   ollama list
+   ```
+
+2. **Test Docker network connection**:
+   ```bash
+   docker exec -it <container_name> curl http://host.docker.internal:11434/api/tags
+   ```
+
+3. **Check environment variable configuration**:
+   Ensure your `.env` file contains:
+   ```bash
+   OLLAMA_HOST=http://host.docker.internal:11434
+   ```
+
+4. **View container logs**:
+   ```bash
+   docker-compose logs -f deepwiki
+   ```
+
+5. **Restart Docker containers**:
+   ```bash
+   docker-compose down && docker-compose up -d
+   ```
+
 ### Slow generation
 - Local models are typically slower than cloud APIs. Consider using a smaller repository or a more powerful computer.
 - The `qwen3:1.7b` model is optimized for speed and quality balance. Larger models will be slower but may produce better results.
@@ -119,6 +176,12 @@ When you select "Use Local Ollama", DeepWiki will:
 ### Out of memory errors
 - If you encounter memory issues, try using a smaller model like `phi3:mini` instead of larger models.
 - Close other memory-intensive applications while running Ollama
+
+### Embedding Model Issues
+If you see "No valid document embeddings found" errors:
+- Verify that `nomic-embed-text` model is downloaded: `ollama pull nomic-embed-text`
+- Check that your embedder configuration uses OllamaClient
+- Ensure Docker containers can access the host Ollama service
 
 ## Advanced: Using Different Models
 
@@ -181,3 +244,35 @@ When using Ollama with DeepWiki:
 Using DeepWiki with Ollama gives you a completely local, private solution for code documentation. While it may not match the speed or quality of cloud-based solutions, it provides a free and privacy-focused alternative that works well for most projects.
 
 Enjoy using DeepWiki with your local Ollama models!
+
+## Frequently Asked Questions (FAQ)
+
+### Q: How can I verify Ollama is properly installed?
+A: Run `ollama --version` in your terminal. It should display version information.
+
+### Q: What should I do if Docker container shows embedding errors?
+A: Follow these troubleshooting steps:
+1. Confirm host Ollama is running: `ollama list`
+2. Verify Docker network connection: `docker exec -it <container_name> curl http://host.docker.internal:11434/api/tags`
+3. Check that your `.env` file contains the correct `OLLAMA_HOST` configuration
+4. Restart Docker containers: `docker-compose down && docker-compose up -d`
+
+### Q: Can I use multiple embedding models simultaneously?
+A: Yes, you can define multiple embedder configurations in your configuration files and switch between them as needed.
+
+### Q: What are the recommended production environment settings?
+A: For production environments, we recommend:
+- GPU-accelerated servers
+- At least 16GB of RAM
+- Use `llama3:8b` or larger models for better quality
+- Configure appropriate resource limits and monitoring
+- Ensure proper security measures for API access
+
+### Q: How do I switch between different Ollama models?
+A: You can modify the model names in `api/config/generator.json` and `api/config/embedder.json` files, then restart your application.
+
+### Q: What if my Docker containers can't access the host Ollama service?
+A: This is typically a Docker networking issue. Ensure:
+- Your `.env` file contains `OLLAMA_HOST=http://host.docker.internal:11434`
+- Ollama is running on your host machine
+- Test the connection using the Docker exec commands provided in the troubleshooting section

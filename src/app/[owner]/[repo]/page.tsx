@@ -819,10 +819,32 @@ IMPORTANT:
       // Clean up markdown delimiters
       responseText = responseText.replace(/^```(?:xml)?\s*/i, '').replace(/```\s*$/i, '');
 
+      // 添加调试信息
+      console.log('Raw response text:', responseText.substring(0, 500) + '...');
+
       // Extract wiki structure from response
       const xmlMatch = responseText.match(/<wiki_structure>[\s\S]*?<\/wiki_structure>/m);
       if (!xmlMatch) {
-        throw new Error('No valid XML found in response');
+          // 提供更详细的错误信息
+          console.error('Full response text:', responseText);
+          console.error('Response length:', responseText.length);
+          
+          // 检查是否包含错误信息
+          if (responseText.includes('Error:') || responseText.includes('error')) {
+            throw new Error(`API Error in response: ${responseText.substring(0, 200)}...`);
+          }
+          
+          // 检查是否为空响应
+          if (!responseText.trim()) {
+            throw new Error('Empty response received from AI model. Please check your API configuration and try again.');
+          }
+          
+          // 检查是否包含部分 XML
+          if (responseText.includes('<wiki_structure>') || responseText.includes('</wiki_structure>')) {
+            throw new Error('Incomplete XML structure found in response. The AI model response may have been truncated.');
+          }
+          
+          throw new Error(`No valid XML found in response. Response preview: ${responseText.substring(0, 200)}...`);
       }
 
       let xmlText = xmlMatch[0];

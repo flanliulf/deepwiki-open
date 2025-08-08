@@ -1,5 +1,5 @@
 {
-  "default_provider": "google",
+  "default_provider": "openrouter",
   "providers": {
     "google": {
       "default_model": "gemini-2.0-flash",
@@ -49,39 +49,59 @@
       }
     },
     "openrouter": {
-      "default_model": "openai/gpt-4o",
+      "default_model": "google/gemini-2.5-pro",
       "supportsCustomModel": true,
       "models": {
-        "openai/gpt-4o": {
-          "temperature": 0.7,
+        "google/gemini-2.5-pro": {
+          "temperature": 0.2,
           "top_p": 0.8
         },
-        "deepseek/deepseek-r1": {
-          "temperature": 0.7,
+        "google/gemini-2.5-flash": {
+          "temperature": 0.2,
           "top_p": 0.8
         },
-        "openai/gpt-4.1": {
-          "temperature": 0.7,
+        "anthropic/claude-sonnet-4": {
+          "temperature": 0.2,
           "top_p": 0.8
         },
-        "openai/o1": {
-          "temperature": 0.7,
+        "anthropic/claude-opus-4": {
+          "temperature": 0.2,
+          "top_p": 0.8
+        },
+        "anthropic/claude-opus-4.1": {
+          "temperature": 0.2,
+          "top_p": 0.8
+        },
+        "moonshotai/kimi-k2": {
+          "temperature": 0.2,
+          "top_p": 0.8
+        },
+        "deepseek/deepseek-chat-v3-0324": {
+          "temperature": 0.2,
+          "top_p": 0.8
+        },
+        "deepseek/deepseek-r1-0528": {
+          "temperature": 0.2,
           "top_p": 0.8
         },
         "openai/o3": {
-          "temperature": 0.7,
+          "temperature": 0.2,
           "top_p": 0.8
         },
-        "openai/o4-mini": {
-          "temperature": 0.7,
+        "z-ai/glm-4.5": {
+          "temperature": 0.2,
           "top_p": 0.8
         },
-        "anthropic/claude-3.7-sonnet": {
-          "temperature": 0.7,
+        "openai/gpt-4.5-preview": {
+          "temperature": 0.2,
           "top_p": 0.8
         },
-        "anthropic/claude-3.5-sonnet": {
-          "temperature": 0.7,
+        "openai/gpt-4.1": {
+          "temperature": 0.2,
+          "top_p": 0.8
+        },
+        "openai/gpt-4o": {
+          "temperature": 0.2,
           "top_p": 0.8
         }
       }

@@ -235,6 +235,49 @@ deepwiki/
 2. **检查控制台日志**：打开浏览器开发者工具查看任何JavaScript错误
 3. **检查API日志**：查看运行API的终端中的Python错误
 
+## 🐳 Docker 部署更新
+
+### 开发迭代后更新部署
+
+当您的项目代码发生变更后，使用以下命令更新 Docker 部署：
+
+#### 标准更新流程（推荐）
+```bash
+# 停止并删除当前容器
+docker-compose down
+
+# 重新构建镜像（不使用缓存）
+docker-compose build --no-cache
+
+# 启动新容器
+docker-compose up -d
+```
+
+#### 快速更新（开发环境）
+```bash
+# 使用缓存快速重建
+docker-compose down && docker-compose build && docker-compose up -d
+```
+
+#### 查看部署状态
+```bash
+# 检查容器状态
+docker-compose ps
+
+# 查看实时日志
+docker-compose logs -f deepwiki
+
+# 健康检查
+curl -f http://localhost:8001/health
+```
+
+> 📋 **详细部署指南**: 查看 [deployment-guide.md](./deployment-guide.md) 获取完整的部署文档，包括故障排除和性能优化建议。
+
+### 数据持久化
+项目已配置数据持久化，重新部署不会丢失：
+- 仓库和嵌入数据 (`~/.adalflow`)
+- 日志文件 (`./api/logs`)
+
 ## 🤝 贡献
 
 欢迎贡献！随时：

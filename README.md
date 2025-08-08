@@ -495,6 +495,49 @@ To use DeepResearch, simply toggle the "Deep Research" switch in the Ask interfa
 2. **Check console logs**: Open browser developer tools to see any JavaScript errors
 3. **Check API logs**: Look at the terminal where the API is running for Python errors
 
+## 🐳 Docker Deployment Updates
+
+### Updating Deployment After Development Iterations
+
+When your project code changes, use the following commands to update your Docker deployment:
+
+#### Standard Update Process (Recommended)
+```bash
+# Stop and remove current containers
+docker-compose down
+
+# Rebuild images without cache
+docker-compose build --no-cache
+
+# Start new containers
+docker-compose up -d
+```
+
+#### Quick Update (Development)
+```bash
+# Fast rebuild with cache
+docker-compose down && docker-compose build && docker-compose up -d
+```
+
+#### Check Deployment Status
+```bash
+# Check container status
+docker-compose ps
+
+# View real-time logs
+docker-compose logs -f deepwiki
+
+# Health check
+curl -f http://localhost:8001/health
+```
+
+> 📋 **Detailed Deployment Guide**: See [deployment-guide.md](./deployment-guide.md) for comprehensive deployment documentation, including troubleshooting and performance optimization tips.
+
+### Data Persistence
+The project is configured with data persistence - redeployment won't lose:
+- Repository and embedding data (`~/.adalflow`)
+- Log files (`./api/logs`)
+
 ## 🤝 Contributing
 
 Contributions are welcome! Feel free to:

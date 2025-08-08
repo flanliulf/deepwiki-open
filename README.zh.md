@@ -299,10 +299,13 @@ DeepWiki 现在实现了灵活的基于提供者的模型选择系统，支持�
 
 ### 支持的提供商和模型
 
-- **Google**: 默认使用 `gemini-2.0-flash`，还支持 `gemini-1.5-flash`、`gemini-1.0-pro` 等
-- **OpenAI**: 默认使用 `gpt-4o`，还支持 `o4-mini` 等
-- **OpenRouter**: 通过统一 API 访问多种模型，包括 Claude、Llama、Mistral 等
-- **Ollama**: 支持本地运行的开源模型，如 `llama3`
+- **Google**: 默认使用 `gemini-2.0-flash`，还支持 `gemini-2.5-flash-preview`、`gemini-2.5-pro-preview` 等
+- **OpenAI**: 默认使用 `gpt-4o`，还支持 `gpt-4.1`、`o1`、`o3`、`o4-mini` 等
+- **OpenRouter**: 默认使用 `google/gemini-2.5-pro`，通过统一 API 访问多种模型，包括 Claude、Llama、DeepSeek、GLM 等
+- **Ollama**: 默认使用 `qwen3:1.7b`，支持本地运行的开源模型，如 `llama3:8b`、`qwen3:8b` 等
+- **DashScope**: 默认使用 `qwen-plus`，还支持 `qwen-turbo`、`deepseek-r1` 等
+- **Bedrock**: 默认使用 `anthropic.claude-3-sonnet-20240229-v1:0`，支持 Claude、Titan、Cohere 等模型
+- **Azure**: 默认使用 `gpt-4o`，还支持 `gpt-4`、`gpt-35-turbo`、`gpt-4-turbo` 等
 
 ### 环境变量
 

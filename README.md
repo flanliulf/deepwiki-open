@@ -186,11 +186,13 @@ DeepWiki now implements a flexible provider-based model selection system support
 
 ### Supported Providers and Models
 
-- **Google**: Default `gemini-2.0-flash`, also supports `gemini-1.5-flash`, `gemini-1.0-pro`, etc.
-- **OpenAI**: Default `gpt-4o`, also supports `o4-mini`, etc.
-- **OpenRouter**: Access to multiple models via a unified API, including Claude, Llama, Mistral, etc.
-- **Azure OpenAI**: Default `gpt-4o`, also supports `o4-mini`, etc.
-- **Ollama**: Support for locally running open-source models like `llama3`
+- **Google**: Default `gemini-2.0-flash`, also supports `gemini-2.5-flash-preview`, `gemini-2.5-pro-preview`, etc.
+- **OpenAI**: Default `gpt-4o`, also supports `gpt-4.1`, `o1`, `o3`, `o4-mini`, etc.
+- **OpenRouter**: Default `google/gemini-2.5-pro`, access to multiple models via a unified API, including Claude, Llama, DeepSeek, GLM, etc.
+- **Ollama**: Default `qwen3:1.7b`, support for locally running open-source models like `llama3:8b`, `qwen3:8b`, etc.
+- **DashScope**: Default `qwen-plus`, also supports `qwen-turbo`, `deepseek-r1`, etc.
+- **Bedrock**: Default `anthropic.claude-3-sonnet-20240229-v1:0`, supports Claude, Titan, Cohere models, etc.
+- **Azure**: Default `gpt-4o`, also supports `gpt-4`, `gpt-35-turbo`, `gpt-4-turbo`, etc.
 
 ### Environment Variables
 

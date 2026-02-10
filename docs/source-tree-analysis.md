@@ -157,7 +157,9 @@ deepwiki-open/
 | `simple_chat.py` | 简单聊天：轻量级对话接口 |
 | `logging_config.py` | 日志配置：支持文件输出和日志级别控制 |
 
-### AI 客户端 (6 个提供商)
+### AI 客户端 (7 个提供商)
+
+注：Google Gemini 通过 `google.generativeai` SDK 直接调用，其他 6 个提供商有独立客户端实现文件。
 
 | 客户端文件 | 对应提供商 |
 |-----------|-----------|

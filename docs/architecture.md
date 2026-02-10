@@ -42,7 +42,7 @@ DeepWiki-Open 采用前后端分离架构，前端基于 **Next.js 15 + React 19
 ```
 
 - **ThemeProvider**: 基于 `next-themes`，通过 `data-theme` 属性切换亮色/暗色模式，默认跟随系统。
-- **LanguageProvider**: 自定义国际化上下文 (`src/contexts/LanguageContext.tsx`)，支持英文、中文、日文、韩文、西班牙文、越南文。
+- **LanguageProvider**: 自定义国际化上下文 (`src/contexts/LanguageContext.tsx`)，支持 10 种语言（英文、简体中文、繁体中文、日文、韩文、西班牙文、法文、巴西葡萄牙文、俄文、越南文）。
 
 ### 页面结构
 
